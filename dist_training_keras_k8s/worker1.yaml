@@ -1,0 +1,50 @@
+# Derived from https://github.com/tensorflow/ecosystem/tree/master/distribution_strategy
+# Retrieved at May 17 2021
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: dist-training-example-worker-1
+spec:
+  type: LoadBalancer
+  selector:
+    name: dist-training-example
+    job: worker
+    task: "0"
+  ports:
+  - port: 5000
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dist-training-example-worker-1
+spec:
+  manualSelector: true
+  selector:
+    matchLabels:
+      name: dist-training-example
+  # replicas: 1
+  template:
+    metadata:
+      labels:
+        name: dist-training-example
+        job: worker
+        task: "0"
+    spec:
+      containers:
+      - name: tensorflow
+        image: liondon/dist-training-k8s:latest
+        ports:
+        - containerPort: 5000
+        resources:
+          requests: 
+            memory: 2Gi
+        env:
+        - name: TF_CONFIG
+          value: "{\"cluster\": {\"worker\": [\"dist-training-example-worker-0:5000\",\"dist-training-example-worker-1:5000\"]},\"task\": {\"type\": \"worker\",\"index\": \"1\"}}"
+        - name: epochs
+          value: "1"
+        command:
+        - "python"
+        - "main.py"
+      restartPolicy: OnFailure

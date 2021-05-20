@@ -1,0 +1,10 @@
+# Exclude everything:
+*
+
+# Then un-exclude files used in Dockerfile:
+!main.py
+!mnist.py
+!single.py
+#!requirements.txt
+#!nets/
+#!utils/
